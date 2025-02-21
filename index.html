@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Speech Synthesis</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Pacifico"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="https://fav.farm/🔥" />
+  </head>
+  <body>
+    <div class="voiceinator">
+      <h1>The Voiceinator 5000</h1>
+
+      <select name="voice" id="voices">
+        <option value="">Select A Voice</option>
+      </select>
+
+      <label for="rate">Rate:</label>
+      <input name="rate" type="range" min="0" max="3" value="1" step="0.1" />
+
+      <label for="pitch">Pitch:</label>
+      <input name="pitch" type="range" min="0" max="2" step="0.1" />
+
+      <textarea name="text">Hello! I love JavaScript 👍</textarea>
+      <button id="stop">Stop!</button>
+      <button id="speak">Speak</button>
+    </div>
+
+    <script>
+      // This script enables text-to-speech functionality using the Web Speech API.
+
+      // Creating a SpeechSynthesisUtterance object
+      const msg = new SpeechSynthesisUtterance();
+      // Creates an instance of SpeechSynthesisUtterance, which represents the text-to-speech request.
+      // This object will store the text, voice, pitch, and rate settings.
+      // SpeechSynthesisUtterance { text: "", lang: "", voice: null, volume: 1, rate: 1, pitch: 1, onstart: null, onend: null, onerror: null, onpause: null }
+
+      let voices = [];
+      const voicesDropdown = document.querySelector('[name="voice"]');
+      //  References the <select> element for choosing a voice.
+      const options = document.querySelectorAll(
+        '[type="range"], [name="text"]'
+      );
+      // A NodeList containing the <input> (rate & pitch sliders) and <textarea> (text to speak).
+      const speakButton = document.querySelector("#speak");
+      const stopButton = document.querySelector("#stop");
+
+      msg.text = document.querySelector('[name="text"]').value;
+      // Retrieves the initial text from the <textarea> and assigns it to msg.text.
+      console.log(msg);
+      // SpeechSynthesisUtterance { text: "Hello! I love JavaScript 👍", lang: "", voice: null, volume: 1, rate: 1, pitch: 1, onstart: null, onend: null, onerror: null, onpause: null }
+
+      function populateVoices() {
+        console.log(this); // Logs "Window"
+        voices = speechSynthesis.getVoices(); // Retrieves available voices
+        console.log(voices);
+        // Array(176) [ SpeechSynthesisVoice {default: false, lang: "en-US", localService: true,​ name: "Albert", voiceURI: "urn:moz-tts:osx:com.apple.speech.synthesis.voice.Albert"}, SpeechSynthesisVoice{****}, ... ]
+        voicesDropdown.innerHTML = voices
+          .filter((voice) => voice.lang.includes("en"))
+          .map(
+            (voice) =>
+              `<option value="${voice.name}">${voice.name} (${voice.lang})</option>`
+          )
+          .join(""); // Creates a list of voice options
+      }
+
+      function setVoice() {
+        console.log(this); // Logs the <select> element
+        console.log(this.value); // Logs the selected voice name (ex. "Albert" <= <option value="Albert">Albert (en-US)</option> )
+
+        // Retrieves the selected voice (this.value) from the dropdown.
+        // Finds the corresponding SpeechSynthesisVoice object and assigns it to msg.voice.
+        msg.voice = voices.find((voice) => voice.name === this.value);
+        // Calls toggle() to restart speech with the new voice.
+        toggle();
+      }
+
+      function toggle(startOver = true) {
+        speechSynthesis.cancel(); // Stops any ongoing speech
+
+        if (startOver) {
+          speechSynthesis.speak(msg); // Starts speaking the text
+        }
+        // When stopButton is clicked, toggle(false) runs, stopping speech without restarting.
+      }
+
+      function setOption() {
+        console.log(options); // NodeList(3) [ input, input, textarea ]
+        console.log(this.name, this.value); // ex. rate 1.5, pitch 1.2, text Hello! I love JavaScript 👍 changed!
+
+        msg[this.name] = this.value;
+        // Updates the msg object with the new rate, pitch, or text
+        // ex. msg[rate] = 1.5, msg[pitch] = 1.2, msg[text] = ****
+
+        // Calls toggle() to restart speech with the new voice.
+        toggle();
+      }
+
+      // Call immediately to populate voices (if available)
+      populateVoices();
+      // Listens for "voiceschanged" to update the dropdown when voices are available.
+      speechSynthesis.addEventListener("voiceschanged", populateVoices);
+
+      // When the user selects a new voice, setVoice() is called to apply it.
+      voicesDropdown.addEventListener("change", setVoice);
+      // When rate, pitch, or text changes, setOption() updates the speech settings.
+      options.forEach((option) => option.addEventListener("change", setOption));
+      // Starts speaking the text when clicked.
+      speakButton.addEventListener("click", toggle);
+      // Stops speech without restarting.
+      stopButton.addEventListener("click", () => toggle(false));
+    </script>
+  </body>
+</html>
